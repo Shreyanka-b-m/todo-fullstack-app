@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from sqlalchemy import text
 from database import engine
+from schemas import TaskCreate
+from sqlalchemy import text
+from database import engine
 
 app = FastAPI()   # Create FastAPI Backend application
 
@@ -27,9 +30,29 @@ def get_tasks():
         return tasks
 
 
+@app.post("/tasks")
+def create_task(task: TaskCreate):
+
+    with engine.connect() as connection:
+
+        connection.execute(
+            text(
+                "INSERT INTO tasks (title) VALUES (:title)"
+            ),
+            {
+                "title": task.title
+            }
+        )
+
+        connection.commit()
+
+    return {
+        "message": "Task created successfully"
+    }
 
 
-# Let's Understand This
+
+# Let's Understand Connection code clearly
 # Open connection
 # with engine.connect() as connection:
 
@@ -81,3 +104,77 @@ def get_tasks():
 #     "completed": false
 #   }
 # ]
+
+
+
+
+
+
+
+# Let's Understand Post Request Slowly
+# FastAPI Route
+# @app.post("/tasks")
+
+# Means:
+
+# When somebody sends POST request
+# to /tasks
+# run this function
+# Input
+# task: TaskCreate
+
+# Means:
+
+# Accept JSON
+
+# {
+#     "title": "something"
+# }
+
+# and convert it into Python object.
+
+# SQL Query
+# INSERT INTO tasks (title)
+# VALUES (:title)
+
+# This is the same SQL you manually ran earlier.
+
+# Remember:
+
+# INSERT INTO tasks (title)
+# VALUES ('Buy milk');
+
+# Same thing.
+
+# Dynamic Value
+# "title": task.title
+
+# Suppose user sends:
+
+# {
+#     "title": "Learn React"
+# }
+
+# FastAPI replaces:
+
+# :title
+
+# with:
+
+# Learn React
+# Commit
+# connection.commit()
+
+# Very important.
+
+# Without this:
+
+# Insert happens
+# ↓
+# Database not saved
+
+# Think:
+
+# Save Button
+
+# for database changes.
