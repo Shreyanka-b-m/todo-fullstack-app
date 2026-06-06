@@ -4,64 +4,144 @@ import "./App.css";
 function App() {
   const [tasks, setTasks] = useState([]);
   const [title, setTitle] = useState("");
-  const [loading, setLoading] = useState(false);
 
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const [token, setToken] = useState(localStorage.getItem("token"));
+
+  // 🔹 Fetch tasks
   const fetchTasks = async () => {
-    const res = await fetch("http://localhost:8000/tasks");
+    if (!token) return;
+
+    const res = await fetch("http://localhost:8000/tasks", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
     const data = await res.json();
     setTasks(data);
   };
 
   useEffect(() => {
     fetchTasks();
-  }, []);
+  }, [token]);
 
+  // 🔹 LOGIN
+  const login = async () => {
+    const res = await fetch(
+      `http://localhost:8000/login?email=${email}&password=${password}`,
+      {
+        method: "POST",
+      }
+    );
+
+    const data = await res.json();
+
+    if (data.token) {
+      localStorage.setItem("token", data.token);
+      setToken(data.token);
+    } else {
+      alert("Login failed");
+    }
+  };
+
+  // 🔹 LOGOUT
+  const logout = () => {
+    localStorage.removeItem("token");
+    setToken(null);
+    setTasks([]);
+  };
+
+  // 🔹 ADD TASK
   const addTask = async () => {
     if (!title.trim()) return;
-
-    setLoading(true);
 
     await fetch("http://localhost:8000/tasks", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ title }),
     });
 
     setTitle("");
-    setLoading(false);
     fetchTasks();
   };
 
+  // 🔹 COMPLETE
   const completeTask = async (id) => {
     await fetch(`http://localhost:8000/tasks/${id}`, {
       method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     });
+
     fetchTasks();
   };
 
+  // 🔹 DELETE
   const deleteTask = async (id) => {
-    if (!confirm("Are you sure you want to delete this task?")) return;
+    if (!confirm("Delete this task?")) return;
 
     await fetch(`http://localhost:8000/tasks/${id}`, {
       method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     });
+
     fetchTasks();
   };
 
+  // 🔴 If NOT logged in → show login UI
+  if (!token) {
+    return (
+      <div className="container">
+        <h1>🔐 Login</h1>
+
+        <div className="input-section">
+          <input
+            placeholder="Email"
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+
+        <div className="input-section">
+          <input
+            type="password"
+            placeholder="Password"
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+
+        <button className="add-btn" onClick={login}>
+          Login
+        </button>
+      </div>
+    );
+  }
+
+  // 🟢 If logged in → show app
   return (
     <div className="container">
       <h1>📝 My Todo App</h1>
+
+      <button onClick={logout} style={{ marginBottom: "15px" }}>
+        Logout
+      </button>
 
       <div className="input-section">
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Enter a new task..."
+          placeholder="Enter task..."
         />
         <button className="add-btn" onClick={addTask}>
-          {loading ? "Adding..." : "Add"}
+          Add
         </button>
       </div>
 
