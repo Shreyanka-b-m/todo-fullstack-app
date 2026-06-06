@@ -1,6 +1,10 @@
 from fastapi.middleware.cors import CORSMiddleware
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Header
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import Depends
+
+from auth import verify_password, hash_password, create_token, get_current_user
 from sqlalchemy import text
 from database import engine
 from schemas import TaskCreate
@@ -17,92 +21,127 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/tasks")      # Runs when the API is called.
-def get_tasks():
+security = HTTPBearer()
+
+@app.get("/tasks")
+def get_tasks(credentials: HTTPAuthorizationCredentials = Depends(security)):
+
+    token = credentials.credentials
+    user_id = get_current_user(token)
 
     with engine.connect() as connection:
-
         result = connection.execute(
-            text("SELECT * FROM tasks")
+            text("SELECT * FROM tasks WHERE user_id = :user_id"),
+            {"user_id": user_id}
         )
 
         tasks = []
-
         for row in result:
-            tasks.append(
-                {
-                    "id": row.id,
-                    "title": row.title,
-                    "completed": bool(row.completed)
-                }
-            )
+            tasks.append({
+                "id": row.id,
+                "title": row.title,
+                "completed": bool(row.completed)
+            })
 
-        return tasks
+    return tasks
 
 
 @app.post("/tasks")
-def create_task(task: TaskCreate):
+def create_task(
+    task: TaskCreate,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+
+    token = credentials.credentials
+    user_id = get_current_user(token)
 
     with engine.connect() as connection:
-
         connection.execute(
-            text(
-                "INSERT INTO tasks (title) VALUES (:title)"
-            ),
+            text("INSERT INTO tasks (title, user_id) VALUES (:title, :user_id)"),
             {
-                "title": task.title
+                "title": task.title,
+                "user_id": user_id
             }
         )
-
         connection.commit()
 
-    return {
-        "message": "Task created successfully"
-    }
+    return {"message": "Task created"}
 
 
 @app.put("/tasks/{task_id}")
-def update_task(task_id: int):
+def update_task(
+    task_id: int,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+
+    token = credentials.credentials
+    user_id = get_current_user(token)
 
     with engine.connect() as connection:
-
         connection.execute(
-            text(
-                "UPDATE tasks SET completed = TRUE WHERE id = :id"
-            ),
-            {
-                "id": task_id
-            }
+            text("UPDATE tasks SET completed = TRUE WHERE id = :id AND user_id = :user_id"),
+            {"id": task_id, "user_id": user_id}
         )
-
         connection.commit()
 
-    return {
-        "message": "Task marked as completed"
-    }
+    return {"message": "Updated"}
 
 
 @app.delete("/tasks/{task_id}")
-def delete_task(task_id: int):
+def delete_task(
+    task_id: int,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+
+    token = credentials.credentials
+    user_id = get_current_user(token)
 
     with engine.connect() as connection:
-
         connection.execute(
-            text(
-                "DELETE FROM tasks WHERE id = :id"
-            ),
-            {
-                "id": task_id
-            }
+            text("DELETE FROM tasks WHERE id = :id AND user_id = :user_id"),
+            {"id": task_id, "user_id": user_id}
         )
-
         connection.commit()
 
-    return {
-        "message": "Task deleted successfully"
-    }
+    return {"message": "Deleted"}
 
 
+@app.post("/signup")
+def signup(email: str, password: str):
+
+    hashed = hash_password(password)
+
+    try:
+        with engine.connect() as connection:
+            connection.execute(
+                text("INSERT INTO users (email, password) VALUES (:email, :password)"),
+                {"email": email, "password": hashed}
+            )
+            connection.commit()
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="User already exists")
+
+    return {"message": "User created successfully"}
+
+@app.post("/login")
+def login(email: str, password: str):
+
+    with engine.connect() as connection:
+        result = connection.execute(
+            text("SELECT * FROM users WHERE email = :email"),
+            {"email": email}
+        ).fetchone()
+
+    if not result:
+        return {"error": "User not found"}
+
+    if not verify_password(password, result.password):
+        return {"error": "Wrong password"}
+
+    token = create_token({"user_id": result.id})
+
+    return {"token": token}
 
 # Let's Understand Connection code clearly
 # Open connection
