@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
+import "./App.css";
 
 function App() {
   const [tasks, setTasks] = useState([]);
   const [title, setTitle] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // Fetch tasks
   const fetchTasks = async () => {
     const res = await fetch("http://localhost:8000/tasks");
     const data = await res.json();
@@ -15,8 +16,11 @@ function App() {
     fetchTasks();
   }, []);
 
-  // Add task
   const addTask = async () => {
+    if (!title.trim()) return;
+
+    setLoading(true);
+
     await fetch("http://localhost:8000/tasks", {
       method: "POST",
       headers: {
@@ -26,92 +30,70 @@ function App() {
     });
 
     setTitle("");
+    setLoading(false);
     fetchTasks();
   };
 
-  // Mark complete
   const completeTask = async (id) => {
     await fetch(`http://localhost:8000/tasks/${id}`, {
       method: "PUT",
     });
-
     fetchTasks();
   };
 
-  // Delete task
   const deleteTask = async (id) => {
+    if (!confirm("Are you sure you want to delete this task?")) return;
+
     await fetch(`http://localhost:8000/tasks/${id}`, {
       method: "DELETE",
     });
-
     fetchTasks();
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>Todo App</h1>
+    <div className="container">
+      <h1>📝 My Todo App</h1>
 
-      <input
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="Enter task"
-      />
-      <button onClick={addTask}>Add</button>
+      <div className="input-section">
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Enter a new task..."
+        />
+        <button className="add-btn" onClick={addTask}>
+          {loading ? "Adding..." : "Add"}
+        </button>
+      </div>
 
-      <ul>
-        {tasks.map((task) => (
-          <li key={task.id}>
-            {task.title} - {task.completed ? "Done" : "Pending"}
+      {tasks.map((task) => (
+        <div className="task-item" key={task.id}>
+          <span
+            className={`task-text ${
+              task.completed ? "completed" : ""
+            }`}
+          >
+            {task.title}
+          </span>
 
-            <button onClick={() => completeTask(task.id)}>✔</button>
-            <button onClick={() => deleteTask(task.id)}>❌</button>
-          </li>
-        ))}
-      </ul>
+          <div className="actions">
+            <button
+              className="complete-btn"
+              onClick={() => completeTask(task.id)}
+            >
+              ✔ Complete
+            </button>
+
+            <button
+              className="delete-btn"
+              onClick={() => deleteTask(task.id)}
+            >
+              ❌ Delete
+            </button>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
 
 export default App;
-
-
-
-
-
-
-
-// Understand This (Very Important)
-// Fetch Data
-// fetch("http://localhost:8000/tasks")
-
-// 👉 Calls your FastAPI GET API
-
-// Add Task
-// method: "POST"
-
-// 👉 Calls your POST API
-
-// Complete Task
-// method: "PUT"
-
-// 👉 Calls your PUT API
-
-// Delete Task
-// method: "DELETE"
-
-// 👉 Calls your DELETE API
-
-// 🔁 Full Flow Now
-// React UI
-//    ↓
-// fetch()
-//    ↓
-// FastAPI
-//    ↓
-// SQL Query
-//    ↓
-// MariaDB
-//    ↓
-// Response
-//    ↓
-// React updates UI
