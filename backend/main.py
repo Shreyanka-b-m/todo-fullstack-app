@@ -1,3 +1,5 @@
+from fastapi.middleware.cors import CORSMiddleware
+
 from fastapi import FastAPI
 from sqlalchemy import text
 from database import engine
@@ -6,6 +8,14 @@ from sqlalchemy import text
 from database import engine
 
 app = FastAPI()   # Create FastAPI Backend application
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # allow all (for now)
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/tasks")      # Runs when the API is called.
 def get_tasks():
