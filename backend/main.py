@@ -51,6 +51,48 @@ def create_task(task: TaskCreate):
     }
 
 
+@app.put("/tasks/{task_id}")
+def update_task(task_id: int):
+
+    with engine.connect() as connection:
+
+        connection.execute(
+            text(
+                "UPDATE tasks SET completed = TRUE WHERE id = :id"
+            ),
+            {
+                "id": task_id
+            }
+        )
+
+        connection.commit()
+
+    return {
+        "message": "Task marked as completed"
+    }
+
+
+@app.delete("/tasks/{task_id}")
+def delete_task(task_id: int):
+
+    with engine.connect() as connection:
+
+        connection.execute(
+            text(
+                "DELETE FROM tasks WHERE id = :id"
+            ),
+            {
+                "id": task_id
+            }
+        )
+
+        connection.commit()
+
+    return {
+        "message": "Task deleted successfully"
+    }
+
+
 
 # Let's Understand Connection code clearly
 # Open connection
@@ -178,3 +220,65 @@ def create_task(task: TaskCreate):
 # Save Button
 
 # for database changes.
+
+
+
+
+# Understand Put Request Clearly
+# 1. Path Parameter
+# @app.put("/tasks/{task_id}")
+
+# means:
+
+# User will send:
+# PUT /tasks/1
+# PUT /tasks/2
+# 2. Input
+# task_id: int
+
+# FastAPI automatically takes:
+
+# /tasks/1 → task_id = 1
+# 3. SQL Query
+# UPDATE tasks
+# SET completed = TRUE
+# WHERE id = :id
+
+# Same SQL you ran manually earlier.
+
+# 4. Dynamic Value
+# "id": task_id
+
+# If:
+
+# PUT /tasks/1
+
+# Then:
+
+# WHERE id = 1
+# 5. Commit
+# connection.commit()
+
+# Again → save changes to DB
+
+
+
+
+# Understand Delete Request
+# 1. Route
+# @app.delete("/tasks/{task_id}")
+
+# Means:
+
+# DELETE request to /tasks/1
+# 2. SQL
+# DELETE FROM tasks WHERE id = :id
+
+# Same SQL you used manually.
+
+# 3. Dynamic Value
+# "id": task_id
+
+# So:
+
+# /tasks/2 → id = 2

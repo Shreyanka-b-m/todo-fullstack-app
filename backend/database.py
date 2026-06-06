@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine
 
-DATABASE_URL = "mysql+pymysql://todo_user:todo123@localhost/todo_app"
+# DATABASE_URL = "mysql+pymysql://todo_user:todo123@localhost/todo_app"
+DATABASE_URL = "mysql+pymysql://todo_user:todo123@localhost:3307/todo_app"
 
 engine = create_engine(DATABASE_URL)
 
