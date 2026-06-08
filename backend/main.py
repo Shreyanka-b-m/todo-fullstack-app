@@ -143,10 +143,10 @@ def login(email: str, password: str):
         ).fetchone()
 
     if not result:
-        return {"error": "User not found"}
+        return {"error": "No account found with this email"}
 
     if not verify_password(password, result.password):
-        return {"error": "Wrong password"}
+        return {"error": "Incorrect password"}
 
     token = create_token({"user_id": result.id})
 
