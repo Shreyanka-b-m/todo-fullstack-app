@@ -6,6 +6,7 @@ function App() {
   const [tasks, setTasks] = useState([]);
   const [title, setTitle] = useState("");
   const [isSignup, setIsSignup] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,39 +33,55 @@ function App() {
 
   // 🔹 LOGIN
   const login = async () => {
-    const res = await fetch(
-      `${API_URL}/login?email=${email}&password=${password}`,
-      {
-        method: "POST",
+    setLoading(true);
+
+    try {
+      const res = await fetch(
+        `${API_URL}/login?email=${email}&password=${password}`,
+        {
+          method: "POST",
+        }
+      );
+
+      const data = await res.json();
+
+      if (res.ok && data.token) {
+        localStorage.setItem("token", data.token);
+        setToken(data.token);
+      } else {
+        alert(data.error || data.detail || "Login failed");
       }
-    );
-
-    const data = await res.json();
-
-    if (data.token) {
-      localStorage.setItem("token", data.token);
-      setToken(data.token);
-    } else {
-      alert("Login failed");
+    } catch {
+      alert("Unable to connect to server");
     }
+
+    setLoading(false);
   };
 
   const signup = async () => {
-    const res = await fetch(
-      `https://todo-fullstack-app-un7y.onrender.com/signup?email=${email}&password=${password}`,
-      {
-        method: "POST",
+    setLoading(true);
+
+    try {
+      const res = await fetch(
+        `${API_URL}/signup?email=${email}&password=${password}`,
+        {
+          method: "POST",
+        }
+      );
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert("Account created successfully!");
+        setIsSignup(false);
+      } else {
+        alert(data.detail || "Signup failed");
       }
-    );
-
-    const data = await res.json();
-
-    if (res.ok) {
-      alert("Account created successfully!");
-      setIsSignup(false);
-    } else {
-      alert(data.detail);
+    } catch {
+      alert("Unable to connect to server");
     }
+
+    setLoading(false);
   };
 
   // 🔹 LOGOUT
@@ -142,9 +159,14 @@ function App() {
 
         <button
           className="add-btn"
+          disabled={loading}
           onClick={isSignup ? signup : login}
         >
-          {isSignup ? "Sign Up" : "Login"}
+          {loading
+            ? "Please wait..."
+            : isSignup
+              ? "Sign Up"
+              : "Login"}
         </button>
         <p style={{ marginTop: "15px" }}>
           {isSignup ? (
