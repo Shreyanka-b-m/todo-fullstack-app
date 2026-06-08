@@ -5,6 +5,7 @@ const API_URL = "https://todo-fullstack-app-un7y.onrender.com";
 function App() {
   const [tasks, setTasks] = useState([]);
   const [title, setTitle] = useState("");
+  const [isSignup, setIsSignup] = useState(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -45,6 +46,24 @@ function App() {
       setToken(data.token);
     } else {
       alert("Login failed");
+    }
+  };
+
+  const signup = async () => {
+    const res = await fetch(
+      `https://todo-fullstack-app-un7y.onrender.com/signup?email=${email}&password=${password}`,
+      {
+        method: "POST",
+      }
+    );
+
+    const data = await res.json();
+
+    if (res.ok) {
+      alert("Account created successfully!");
+      setIsSignup(false);
+    } else {
+      alert(data.detail);
     }
   };
 
@@ -102,7 +121,9 @@ function App() {
   if (!token) {
     return (
       <div className="container">
-        <h1>🔐 Login</h1>
+        <h1>
+          {isSignup ? "📝 Create Account" : "🔐 Login"}
+        </h1>
 
         <div className="input-section">
           <input
@@ -119,9 +140,35 @@ function App() {
           />
         </div>
 
-        <button className="add-btn" onClick={login}>
-          Login
+        <button
+          className="add-btn"
+          onClick={isSignup ? signup : login}
+        >
+          {isSignup ? "Sign Up" : "Login"}
         </button>
+        <p style={{ marginTop: "15px" }}>
+          {isSignup ? (
+            <>
+              Already have an account?{" "}
+              <span
+                style={{ cursor: "pointer", color: "#4ade80" }}
+                onClick={() => setIsSignup(false)}
+              >
+                Login
+              </span>
+            </>
+          ) : (
+            <>
+              Don't have an account?{" "}
+              <span
+                style={{ cursor: "pointer", color: "#4ade80" }}
+                onClick={() => setIsSignup(true)}
+              >
+                Sign Up
+              </span>
+            </>
+          )}
+        </p>
       </div>
     );
   }
@@ -149,9 +196,8 @@ function App() {
       {tasks.map((task) => (
         <div className="task-item" key={task.id}>
           <span
-            className={`task-text ${
-              task.completed ? "completed" : ""
-            }`}
+            className={`task-text ${task.completed ? "completed" : ""
+              }`}
           >
             {task.title}
           </span>
