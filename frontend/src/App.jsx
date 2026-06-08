@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "./App.css";
+const API_URL = "https://todo-fullstack-app-un7y.onrender.com";
 
 function App() {
   const [tasks, setTasks] = useState([]);
@@ -14,7 +15,7 @@ function App() {
   const fetchTasks = async () => {
     if (!token) return;
 
-    const res = await fetch("http://localhost:8000/tasks", {
+    const res = await fetch(`${API_URL}/tasks`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -31,7 +32,7 @@ function App() {
   // 🔹 LOGIN
   const login = async () => {
     const res = await fetch(
-      `http://localhost:8000/login?email=${email}&password=${password}`,
+      `${API_URL}/login?email=${email}&password=${password}`,
       {
         method: "POST",
       }
@@ -58,7 +59,7 @@ function App() {
   const addTask = async () => {
     if (!title.trim()) return;
 
-    await fetch("http://localhost:8000/tasks", {
+    await fetch(`${API_URL}/tasks`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -73,7 +74,7 @@ function App() {
 
   // 🔹 COMPLETE
   const completeTask = async (id) => {
-    await fetch(`http://localhost:8000/tasks/${id}`, {
+    await fetch(`${API_URL}/tasks/${id}`, {
       method: "PUT",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -87,7 +88,7 @@ function App() {
   const deleteTask = async (id) => {
     if (!confirm("Delete this task?")) return;
 
-    await fetch(`http://localhost:8000/tasks/${id}`, {
+    await fetch(`${API_URL}/tasks/${id}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,
