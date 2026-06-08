@@ -1,10 +1,19 @@
+# from sqlalchemy import create_engine
+
+# DATABASE_URL = "mysql+pymysql://root:UadUquLmjNCxjRBifsAUMgFKVMVHlUoB@acela.proxy.rlwy.net:30999/railway"
+
+
+# engine = create_engine(DATABASE_URL)
+
+import os
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 
-# DATABASE_URL = "mysql+pymysql://todo_user:todo123@localhost/todo_app"
-DATABASE_URL = "mysql+pymysql://todo_user:todo123@localhost:3307/todo_app"
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 engine = create_engine(DATABASE_URL)
-
 
 
 # Let's Understand This URL

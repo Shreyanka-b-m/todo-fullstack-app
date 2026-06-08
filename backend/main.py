@@ -114,13 +114,22 @@ def signup(email: str, password: str):
     try:
         with engine.connect() as connection:
             connection.execute(
-                text("INSERT INTO users (email, password) VALUES (:email, :password)"),
-                {"email": email, "password": hashed}
+                text(
+                    "INSERT INTO users (email, password) VALUES (:email, :password)"
+                ),
+                {
+                    "email": email,
+                    "password": hashed
+                }
             )
             connection.commit()
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail="User already exists")
+        print("SIGNUP ERROR:", e)  # keep for server logs
+        raise HTTPException(
+            status_code=400,
+            detail="User already exists or signup failed"
+        )
 
     return {"message": "User created successfully"}
 
